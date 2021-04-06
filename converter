@@ -1,0 +1,49 @@
+import sqlite3
+import csv
+import pandas as pd
+
+class converter:
+    @classmethod
+    def sql_to_csv(cls,db_file):
+        conn = sqlite3.connect(db_file)
+        cursor = conn.cursor()
+        cursor = conn.execute("SELECT * from fault_lines") 
+        result = cursor.fetchall()
+        # Export data into CSV file
+        with open("all_fault_lines.csv", "w") as csv_file:
+            csv_writer = csv.writer(csv_file)
+            csv_writer.writerow([i[0] for i in cursor.description])
+            csv_writer.writerows(result)
+
+        conn.close()
+        
+        print ("Data exported Successfully into CSV file")
+        
+        #return content of csv file
+        return pd.read_csv("all_fault_lines.csv")
+
+    @classmethod
+    def csv_to_sql(cls,csv_file):
+        users = pd.read_csv(csv_file)
+        #create database
+        conn = sqlite3.connect("list_volcanos.db")
+        # Insert some values to database
+        users.to_sql('volcanos', conn, if_exists='append', index = False)
+        conn.commit()
+        print ("Data exported Successfully into db file in SQL format")
+
+        #return content of db file
+        cursor = conn.execute("SELECT * from volcanos") 
+        field_names = [i[0] for i in cursor.description]
+        result = cursor.fetchall()
+
+        conn.close()
+
+        return field_names+result
+
+#call classmethod to convert db file to csv
+db_file = "all_fault_line.db"
+converter.sql_to_csv(db_file) 
+#call classmethod to convert csv file to db
+csv_file = "list_volcano.csv"
+converter.csv_to_sql(csv_file)
